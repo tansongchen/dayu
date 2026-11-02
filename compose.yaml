@@ -1,0 +1,68 @@
+name: dayu
+x-bot: &bot
+  image: dayu:local
+  build:
+    context: .
+    args:
+      HTTP_PROXY: ${DAYU_PROXY:-}
+      HTTPS_PROXY: ${DAYU_PROXY:-}
+  user: "1000:1000"
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  restart: unless-stopped
+  stop_grace_period: 30s
+  pids_limit: 256
+  mem_limit: 3g
+  cpus: 2
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,nodev,size=512m,mode=1777
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  environment: &environment
+    LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+    LLM_API: ${LLM_API:-openai-responses}
+    LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+    LLM_MODEL: ${LLM_MODEL:-gpt-6-sol}
+    LLM_API_KEY: ${LLM_API_KEY:-}
+    HTTP_PROXY: ${DAYU_PROXY:-}
+    HTTPS_PROXY: ${DAYU_PROXY:-}
+    NO_PROXY: localhost,127.0.0.1,::1
+    TZ: ${TZ:-Asia/Shanghai}
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: "3"}
+services:
+  snow-dayu:
+    <<: *bot
+    command: [snow-dayu]
+    working_dir: ${SNOW_WORKSPACE:-/workspace}
+    networks: [snow]
+    environment:
+      <<: *environment
+      QQBOT_APPID: ${SNOW_QQ_APP_ID:-}
+      QQBOT_SECRET: ${SNOW_QQ_APP_SECRET:-}
+    volumes:
+      - snow-state:/state
+      - snow-work:${SNOW_WORKSPACE:-/workspace}
+  chaifen-dayu:
+    <<: *bot
+    command: [chaifen-dayu]
+    working_dir: ${CHAIFEN_WORKSPACE:-/workspace}
+    networks: [chaifen]
+    environment:
+      <<: *environment
+      QQBOT_APPID: ${CHAIFEN_QQ_APP_ID:-}
+      QQBOT_SECRET: ${CHAIFEN_QQ_APP_SECRET:-}
+    volumes:
+      - chaifen-state:/state
+      - chaifen-work:${CHAIFEN_WORKSPACE:-/workspace}
+networks:
+  snow: {}
+  chaifen: {}
+volumes:
+  snow-state: {}
+  snow-work: {}
+  chaifen-state: {}
+  chaifen-work: {}

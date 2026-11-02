@@ -1,0 +1,12 @@
+[submodule "snow-dayu/docs"]
+	path = snow-dayu/docs
+	url = https://github.com/tansongchen/input.git
+[submodule "snow-dayu/rime-snow-pinyin"]
+	path = snow-dayu/rime-snow-pinyin
+	url = https://github.com/rimeinn/rime-snow-pinyin.git
+[submodule "chaifen-dayu/docs"]
+	path = chaifen-dayu/docs
+	url = https://github.com/hanzi-chai/docs.git
+[submodule "chaifen-dayu/hanzi-chai"]
+	path = chaifen-dayu/hanzi-chai
+	url = https://github.com/hanzi-chai/hanzi-chai.github.io.git

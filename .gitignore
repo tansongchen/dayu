@@ -1,0 +1,15 @@
+.docker-private/
+.staging/
+.DS_Store
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+*.log
+/snow-dayu/output/
+/snow-dayu/output-from-docker/
+/chaifen-dayu/output/
+/chaifen-dayu/output-from-docker/
+/chaifen-dayu/yuling-elements.txt
