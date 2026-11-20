@@ -34,6 +34,25 @@ x-bot: &bot
     driver: json-file
     options: {max-size: 10m, max-file: "3"}
 services:
+  snow-xiaoyu:
+    <<: *bot
+    profiles: [xiaoyu]
+    image: snow-xiaoyu:local
+    build:
+      context: .
+      dockerfile: Dockerfile.snow-xiaoyu
+      args:
+        HTTP_PROXY: ${DAYU_PROXY:-}
+        HTTPS_PROXY: ${DAYU_PROXY:-}
+    working_dir: /opt/dayu
+    networks: [xiaoyu]
+    environment:
+      XIAOYU_QQ_APP_ID: ${XIAOYU_QQ_APP_ID:-}
+      XIAOYU_QQ_APP_SECRET: ${XIAOYU_QQ_APP_SECRET:-}
+      HTTP_PROXY: ${DAYU_PROXY:-}
+      HTTPS_PROXY: ${DAYU_PROXY:-}
+      NO_PROXY: localhost,127.0.0.1,::1
+      TZ: ${TZ:-Asia/Shanghai}
   snow-dayu:
     <<: *bot
     command: [snow-dayu]
@@ -59,6 +78,7 @@ services:
       - chaifen-state:/state
       - chaifen-work:${CHAIFEN_WORKSPACE:-/workspace}
 networks:
+  xiaoyu: {}
   snow: {}
   chaifen: {}
 volumes:

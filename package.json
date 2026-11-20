@@ -1,7 +1,16 @@
 {
   "private": true,
   "type": "module",
+  "scripts": {
+    "snow-xiaoyu": "bun run snow-xiaoyu/index.ts",
+    "check:snow-xiaoyu": "bun run snow-xiaoyu/index.ts --check",
+    "test": "bun test ./snow-xiaoyu",
+    "typecheck": "bun run --bun tsc --noEmit",
+    "check": "bun run --bun biome check --error-on-warnings .",
+    "format": "bun run --bun biome check --write ."
+  },
   "dependencies": {
+    "@deepseek-ai/cordis": "4.0.5",
     "@deepseek-ai/cordis-plugin-group": "1.0.5",
     "@deepseek-ai/dsh": "0.2.0-rc.2",
     "@deepseek-ai/dsh-anonymous-user-id": "0.2.0-rc.2",
@@ -31,10 +40,13 @@
     "@deepseek-ai/dsh-util-time": "0.2.0-rc.2",
     "@deepseek-ai/dsh-util-workspace-path": "0.2.0-rc.2",
     "@deepseek-ai/dsh-workflow": "0.2.0-rc.2",
+    "@resvg/resvg-js": "2.6.2",
     "@tencent-connect/dsh-qqbot": "0.5.2",
+    "@tencent-connect/qqbot-nodejs": "1.0.5",
     "axios": "1.21.0",
     "d3-array": "3.2.4",
     "dsh-openai-codex-auth": "0.6.3",
+    "hanzi-chai": "1.0.0-beta.1",
     "js-yaml": "4.3.2",
     "lodash-es": "4.18.1",
     "pako": "2.1.0"
@@ -42,5 +54,11 @@
   "overrides": {
     "@modelcontextprotocol/client": "2.3.0",
     "fflate": "0.8.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8",
+    "@types/bun": "1.4.5",
+    "@types/js-yaml": "4.0.9",
+    "typescript": "7.0.2"
   }
 }

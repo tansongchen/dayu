@@ -32,10 +32,10 @@ RUN test -f /knowledge/snow-dayu/docs/index.md \
          test -s "packages/hanzi-chai/src/data/$file" || { echo "Missing dataset: $file" >&2; exit 1; }; \
        done \
     && rm -rf public/data
-COPY start.mjs dayu-runtime-logging.mjs /opt/dayu/
+COPY start.ts dayu-runtime-logging.ts /opt/dayu/
 RUN mkdir -p /state/dsh /state/home /workspace && chown -R node:node /state /workspace
 ENV HOME=/state/home DSH_HOME=/state/dsh NODE_USE_ENV_PROXY=1 NARB_DISABLE_NATIVE_CACHE=1 LANG=C.UTF-8 \
     PATH=/opt/dayu/node_modules/.bin:/usr/local/bin:/usr/bin:/bin
 WORKDIR /workspace
 USER 1000:1000
-ENTRYPOINT ["node", "/opt/dayu/start.mjs"]
+ENTRYPOINT ["bun", "/opt/dayu/start.ts"]

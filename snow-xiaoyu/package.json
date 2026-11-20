@@ -1,0 +1,10 @@
+{
+  "name": "snow-xiaoyu",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "@tencent-connect/qqbot-nodejs": "1.0.5",
+    "hanzi-chai": "1.0.0-beta.1"
+  }
+}

@@ -1,5 +1,22 @@
 # 大鱼
 
+在 QQ 群聊或私聊发送 `键道 雪`，`snow-xiaoyu` 会按 `hanzi-chai@1.0.0-beta.1` 内置的 `xkjd.yaml` 查询星空键道编码，并回复一张 PNG。图中按彩虹顺序标出取码字根，其余笔画为灰色。每个读音旁各有一行元素和全码，字根、元素和键位按颜色对应。字不在方案词典时会回复提示。
+
+发送 `四拼 雪` 会使用内置的 `snow4.yaml`。冰雪四拼是纯音码，图片按读音列出取码元素与全码，无字形区。
+
+在 QQ 开放平台创建名为 `snow-xiaoyu` 的机器人，开通群聊及图片消息权限，将它加入测试群，并在 `.env` 填写 `XIAOYU_QQ_APP_ID` / `XIAOYU_QQ_APP_SECRET`。显示名称由 QQ 开放平台设置。然后运行：
+
+```sh
+docker compose up -d --build snow-xiaoyu
+docker compose logs -f --tail=50 snow-xiaoyu
+```
+
+此服务使用独立的轻量镜像，内置 Bun 1.4.4，无需知识库子模组、模型 Key 或持久化卷。Compose 默认只启动原来的两个服务；按上述命令显式指定 `snow-xiaoyu` 即可启动小鱼。代码同时处理普通群消息和 @ 群消息；QQ 官方平台通常只推送 @ 机器人的群消息，若没有全量群消息权限，请使用 `@snow-xiaoyu 键道 雪`。能否免 @ 触发取决于平台实际下发的事件。
+
+本地执行使用 Bun 1.4.4+（Linux 需安装 Noto Sans CJK 字体）：`npm ci --legacy-peer-deps` 安装依赖，然后 `bun run snow-xiaoyu`（自动读取根目录 `.env`）。`bun run check:snow-xiaoyu` 仅检查真实字库和 PNG 渲染，不连接 QQ；`bun test ./snow-xiaoyu` 验证消息过滤、字形渲染和图片回复流程；`bun run typecheck` 检查服务脚本类型。仓库的启动脚本和日志插件也统一为 TypeScript，通过 Bun 执行。容器内可运行 `docker compose run --rm snow-xiaoyu --check`。
+
+`bun run check` 检查仓库自有 TypeScript 和 JSON 的格式、导入顺序和 lint 规则。`bun run format` 自动修复格式和可安全修复的问题。
+
 冰雪大鱼和拆分大鱼的 QQ 机器人服务。需要 Docker Engine + Compose（或 Docker Desktop）、Git、两个 QQ 机器人的 AppID / AppSecret，以及支持工具调用的模型 API Key。支持 Linux AMD64、ARM64；宿主机无需安装 Node、Bun 或 DSH。
 
 ```sh

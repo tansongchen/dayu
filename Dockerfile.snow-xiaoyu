@@ -1,0 +1,20 @@
+FROM node:24.12.0-bookworm-slim@sha256:7326fb2dbdce998edd72140946851be64ef4a643e8715e138ca467e8e9d92c99 AS dependencies
+WORKDIR /opt/dayu
+COPY snow-xiaoyu/package.json snow-xiaoyu/package-lock.json ./
+RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
+ARG TARGETARCH
+RUN case "$TARGETARCH" in arm64) arch=aarch64 ;; amd64) arch=x64 ;; *) exit 1 ;; esac \
+    && npm install --prefix /opt/bun "@oven/bun-linux-${arch}@1.4.4" \
+    && ln -s "/opt/bun/node_modules/@oven/bun-linux-${arch}/bin/bun" /opt/bun/bun
+
+FROM node:24.12.0-bookworm-slim@sha256:7326fb2dbdce998edd72140946851be64ef4a643e8715e138ca467e8e9d92c99
+WORKDIR /opt/dayu
+COPY --from=dependencies /opt /opt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-noto-cjk \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /opt/bun/bun /usr/local/bin/bun
+COPY snow-xiaoyu ./snow-xiaoyu
+ENV LANG=C.UTF-8
+USER 1000:1000
+ENTRYPOINT ["bun", "snow-xiaoyu/index.ts"]
