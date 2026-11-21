@@ -1,8 +1,27 @@
 # 大鱼
 
-在 QQ 群聊或私聊发送 `键道 雪`，`snow-xiaoyu` 会按 `hanzi-chai@1.0.0-beta.1` 内置的 `xkjd.yaml` 查询星空键道编码，并回复一张 PNG。图中按彩虹顺序标出取码字根，其余笔画为灰色。每个读音旁各有一行元素和全码，字根、元素和键位按颜色对应。字不在方案词典时会回复提示。
+在 QQ 群聊或私聊发送 `键道 雪`，`snow-xiaoyu` 会按 `hanzi-chai@1.0.0-beta.1` 内置的 `xkjd.yaml` 查询星空键道编码，并回复一张 PNG。拼音部分使用中性色，形码前四个取码字根依次使用红、绿、蓝、紫，其余笔画为灰色。单笔画字根「横竖撇点折」显示为「⼀⼁⼃⼂乙」。每个读音旁各有一行元素和全码，字根、元素和键位按颜色对应。字不在方案词典时会回复提示。
 
-发送 `四拼 雪` 会使用内置的 `snow4.yaml`。冰雪四拼是纯音码，图片按读音列出取码元素与全码，无字形区。
+发送 `四拼 雪` 会使用内置的 `snow4.yaml`。冰雪四拼是纯音码，图片按读音列出取码元素与全码，全部使用中性色，无字形区。
+
+发送 `飞花beta 营` 会使用本地导出的飞花优化方案，显示正根／余根或部件基本拆分及各读音全码。准包围仅用于取码，图中仍保留原上下或三分布局；着色通过两棵树的笔画对应定位。部件字第 1、2、3 根固定为绿、蓝、紫；复合体正根为红，两个余根为绿、蓝。字根以小图展示，与主字形的颜色一一对应；AB／ABB／ABBB 重复键沿用同一个字根颜色。资料由专用 Rust 优化器的快照导出，逐字与其码表核对，不使用通用飞花分析器重新拆分。
+
+三个方案都支持一次查询多个字，例如 `飞花beta 冰雪飞花`，同一张图中排版：成功查询 1 至 3 个字时排一列，4 个字及以上排两列，按从左到右、从上到下的顺序排列，重复的字保留。忽略输入中的空白，最多处理前 10 个字符，超过时随图片提示截断；其中未收录的字符会跳过并列出警告。若全部未收录，只回复文字提示。
+
+在相邻 `libchai-snow` 仓库生成展示资料，再复制到此仓库：
+
+```sh
+# 在 libchai-snow 中，选择一个已经优化并导出的快照。
+bun src/feihua/postprocess.ts --tree-data output/feihua-current/input.json --solution output/feihua-current/solution.json
+
+# 回到 dayu；完整资料先复制到临时文件，再原子替换。
+mkdir -p snow-xiaoyu/data
+cp ../libchai-snow/output/feihua-current/feihua-beta.json snow-xiaoyu/data/feihua-beta.json.tmp
+mv snow-xiaoyu/data/feihua-beta.json.tmp snow-xiaoyu/data/feihua-beta.json
+bun run check:snow-xiaoyu
+```
+
+展示资料使用版本 2，字根与元素含显式配色角色；旧版 JSON 需要重新导出。默认读取 `snow-xiaoyu/data/feihua-beta.json`；本地可用 `XIAOYU_FEIHUA_BETA_FILE` 指定其他导出文件。展示资料不纳入版本管理，Docker 构建会携带它，Compose 另外只读挂载整个资料目录。首次接入代码后需要重新构建服务；之后替换 JSON 会自动重新载入并清除飞花图片缓存，不需要重启机器人。替换期间请使用上述临时文件与 `mv`，避免读到半份 JSON。未收录的字回复文字提示，不影响键道、四拼命令。
 
 在 QQ 开放平台创建名为 `snow-xiaoyu` 的机器人，开通群聊及图片消息权限，将它加入测试群，并在 `.env` 填写 `XIAOYU_QQ_APP_ID` / `XIAOYU_QQ_APP_SECRET`。显示名称由 QQ 开放平台设置。然后运行：
 

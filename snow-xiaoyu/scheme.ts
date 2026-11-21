@@ -11,8 +11,39 @@ import {
   读取示例配置,
 } from 'hanzi-chai';
 
-export const schemeNames = { 键道: '星空键道', 四拼: '冰雪四拼' } as const;
+export const schemeNames = {
+  键道: '星空键道',
+  四拼: '冰雪四拼',
+  飞花beta: '冰雪飞花 beta',
+} as const;
 export type Scheme = keyof typeof schemeNames;
+export const feihuaColors = {
+  initial: '#526077',
+  component1: '#287745',
+  component2: '#2368a5',
+  component3: '#713eaa',
+  positive: '#b7353b',
+  remainder1: '#287745',
+  remainder2: '#2368a5',
+} as const;
+export type FeihuaColorRole = keyof typeof feihuaColors;
+export interface LookupResult {
+  paths: string[];
+  roots: { strokes: number[]; name: string; colorRole?: FeihuaColorRole }[];
+  rows: {
+    pinyin: string;
+    elements: {
+      label: string;
+      name: string;
+      key: string;
+      colorIndex: number;
+      kind?: 'phonetic' | 'shape';
+      colorRole?: FeihuaColorRole;
+      paths?: string[];
+    }[];
+  }[];
+}
+export type Lookup = (character: string) => LookupResult | null;
 
 export function prepareLookup(id: 'xkjd' | 'snow4') {
   const config = 读取示例配置(id);
@@ -60,10 +91,16 @@ export function createSnow4Lookup() {
       );
       const elements = 元素序列.map((position, colorIndex) => {
         if (typeof position === 'string')
-          return { label: '固定', name: position, key: position, colorIndex };
+          return {
+            label: '固定',
+            name: position,
+            key: position,
+            colorIndex,
+            kind: 'phonetic' as const,
+          };
         const [label, name] = position.element.获取名称().split('-', 2) as [string, string];
         const key = describeKey(position, position.element, context.线性化决策);
-        return { label, name, key, colorIndex };
+        return { label, name, key, colorIndex, kind: 'phonetic' as const };
       });
       return elements.length ? [{ pinyin: reading.拼音[0], elements }] : [];
     });

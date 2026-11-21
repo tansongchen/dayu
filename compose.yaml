@@ -45,6 +45,8 @@ services:
         HTTP_PROXY: ${DAYU_PROXY:-}
         HTTPS_PROXY: ${DAYU_PROXY:-}
     working_dir: /opt/dayu
+    volumes:
+      - ./snow-xiaoyu/data:/opt/dayu/snow-xiaoyu/data:ro
     networks: [xiaoyu]
     environment:
       XIAOYU_QQ_APP_ID: ${XIAOYU_QQ_APP_ID:-}

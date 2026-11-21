@@ -13,3 +13,6 @@ __pycache__/
 /chaifen-dayu/output/
 /chaifen-dayu/output-from-docker/
 /chaifen-dayu/yuling-elements.txt
+
+# Exported optimized scheme bundle, supplied separately from source.
+/snow-xiaoyu/data/

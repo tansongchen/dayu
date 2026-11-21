@@ -1,11 +1,13 @@
 import type { QQBot, QQBotInboundMessage } from '@tencent-connect/qqbot-nodejs';
-import { isSingleHanzi } from './glyph.ts';
+import type { createGlyphRenderer } from './glyph.ts';
 import { type Scheme, schemeNames } from './scheme.ts';
+
+const maxCharacters = 10;
 
 export function getMessageQuery(
   message: QQBotInboundMessage,
   appId: string,
-): { scheme: Scheme; character: string } | null {
+): { scheme: Scheme; characters: string[]; truncated: boolean } | null {
   if (
     (message.kind !== 'group' && message.kind !== 'c2c') ||
     message.senderIsBot ||
@@ -30,8 +32,15 @@ export function getMessageQuery(
       }
     }
   }
-  const [, scheme, character] = /^(键道|四拼)[ \u3000]+(.+)$/u.exec(text) ?? [];
-  return scheme && isSingleHanzi(character) ? { scheme: scheme as Scheme, character } : null;
+  if (/<@!?[^>]+>/u.test(text)) return null;
+  const [, scheme, content] = /^(键道|四拼|飞花beta)\s+([\s\S]+)$/u.exec(text) ?? [];
+  if (!scheme || !content) return null;
+  const characters = [...content.replace(/\s/gu, '')];
+  return {
+    scheme: scheme as Scheme,
+    characters: characters.slice(0, maxCharacters),
+    truncated: characters.length > maxCharacters,
+  };
 }
 
 export function createMessageHandler({
@@ -40,7 +49,7 @@ export function createMessageHandler({
   logger = console,
 }: {
   bot: Pick<QQBot, 'appId' | 'sendImage' | 'sendText'>;
-  renderer: { png(character: string, scheme: Scheme): Buffer | null };
+  renderer: Pick<ReturnType<typeof createGlyphRenderer>, 'pngMany'>;
   logger?: Pick<Console, 'error'>;
 }) {
   const seen = new Map<string, number>();
@@ -48,7 +57,7 @@ export function createMessageHandler({
     const query = getMessageQuery(message, bot.appId);
     const target = message.replyTarget;
     if (!query || target?.scope !== message.kind || !target.targetId || !target.msgId) return;
-    const { scheme, character } = query;
+    const { scheme, characters, truncated } = query;
     const key = `${target.scope}:${target.targetId}:${target.msgId}`;
     const now = Date.now();
     for (const [id, timestamp] of seen) {
@@ -60,15 +69,22 @@ export function createMessageHandler({
     if (seen.size >= 1000 && oldest !== undefined) seen.delete(oldest);
     seen.set(key, now);
     try {
-      const buffer = renderer.png(character, scheme);
+      const { buffer, missing } = renderer.pngMany(characters, scheme);
+      const warnings: string[] = [];
+      if (truncated) warnings.push(`字数超过 ${maxCharacters}，仅处理前 ${maxCharacters} 个字。`);
+      if (missing.length)
+        warnings.push(
+          `${schemeNames[scheme]}暂未收录「${[...new Set(missing)].join('')}」，已跳过。`,
+        );
+      const content = warnings.join('\n');
       if (!buffer) {
-        await bot.sendText(target, `${schemeNames[scheme]}暂未收录「${character}」的编码。`);
+        await bot.sendText(target, content);
         return;
       }
-      await bot.sendImage(target, { buffer });
+      await bot.sendImage(target, { buffer }, content ? { content } : undefined);
     } catch (error) {
       logger.error(
-        `[snow-xiaoyu] 回复「${character}」失败: ${error instanceof Error ? error.message : String(error)}`,
+        `[snow-xiaoyu] 回复「${characters.join('')}」失败: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   };

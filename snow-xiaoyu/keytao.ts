@@ -186,7 +186,13 @@ export function createKeytaoLookup() {
         const key = describeKey(position, element, context.线性化决策);
         const name = displayElement(element.获取名称());
         const label = i === 0 ? '声母' : i === 1 ? '韵母' : '形码';
-        return { label, name, key, colorIndex: rootIndex === undefined ? i : rootIndex + 2 };
+        return {
+          label,
+          name,
+          key,
+          colorIndex: rootIndex === undefined ? i : rootIndex + 2,
+          kind: rootIndex === undefined ? ('phonetic' as const) : ('shape' as const),
+        };
       });
       return { pinyin: reading.拼音[0], elements };
     });
