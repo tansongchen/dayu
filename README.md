@@ -32,23 +32,23 @@ docker compose logs -f --tail=50 snow-xiaoyu
 
 此服务使用独立的轻量镜像，内置 Bun 1.4.4，无需知识库子模组、模型 Key 或持久化卷。Compose 默认只启动原来的两个服务；按上述命令显式指定 `snow-xiaoyu` 即可启动小鱼。代码同时处理普通群消息和 @ 群消息；QQ 官方平台通常只推送 @ 机器人的群消息，若没有全量群消息权限，请使用 `@snow-xiaoyu 键道 雪`。能否免 @ 触发取决于平台实际下发的事件。
 
-本地执行使用 Bun 1.4.4+（Linux 需安装 Noto Sans CJK 字体）：`npm ci --legacy-peer-deps` 安装依赖，然后 `bun run snow-xiaoyu`（自动读取根目录 `.env`）。`bun run check:snow-xiaoyu` 仅检查真实字库和 PNG 渲染，不连接 QQ；`bun test ./snow-xiaoyu` 验证消息过滤、字形渲染和图片回复流程；`bun run typecheck` 检查服务脚本类型。仓库的启动脚本和日志插件也统一为 TypeScript，通过 Bun 执行。容器内可运行 `docker compose run --rm snow-xiaoyu --check`。
+本地执行使用 Bun 1.4.4+（Linux 需安装 Noto Sans CJK 字体）：`npm ci --legacy-peer-deps` 安装依赖，然后 `bun run snow-xiaoyu`（自动读取根目录 `.env`）。`bun run check:snow-xiaoyu` 仅检查真实字库和 PNG 渲染，不连接 QQ；`bun test ./snow-xiaoyu` 验证消息过滤、字形渲染和图片回复流程；`bun run typecheck` 检查服务脚本类型。容器内可运行 `docker compose run --rm snow-xiaoyu --check`。
 
 `bun run check` 检查仓库自有 TypeScript 和 JSON 的格式、导入顺序和 lint 规则。`bun run format` 自动修复格式和可安全修复的问题。
 
-冰雪大鱼和拆分大鱼的 QQ 机器人服务。需要 Docker Engine + Compose（或 Docker Desktop）、Git、两个 QQ 机器人的 AppID / AppSecret，以及支持工具调用的模型 API Key。支持 Linux AMD64、ARM64；宿主机无需安装 Node、Bun 或 DSH。
+冰雪大鱼和拆分大鱼的 QQ 机器人服务。需要 Docker Engine + Compose（或 Docker Desktop）、Git、两个 QQ 机器人的 AppID / AppSecret，以及 DeepSeek API Key。支持 Linux AMD64、ARM64；宿主机无需安装 Node、Bun 或 DSH。
 
 ```sh
 git clone --recurse-submodules https://github.com/tansongchen/dayu.git
 cd dayu
 cp .env.example .env
-# 编辑 .env，填写 QQ 凭据及模型配置
+# 编辑 .env，填写 QQ 凭据和 DEEPSEEK_API_KEY
 docker compose up -d --build
 ```
 
 只启动一个机器人时，在最后一条命令后加 `snow-dayu` 或 `chaifen-dayu`，只需填写对应的 QQ 凭据。通过 `docker compose logs -f --tail=50` 查看连接状态，出现 `Bot ready!` 表示 QQ 已连接；机器人需要被 @ 才处理群消息。默认接受所有私聊和所在群的消息。
 
-`.env` 中 `LLM_API=openai-responses` 对应 Responses API，`openai-completions` 对应兼容的 Chat Completions API；地址、模型名称和 Key 必须属于同一模型服务。默认直接联网，如需代理，填写 `DAYU_PROXY`。本机代理可使用 `http://host.docker.internal:7897`，代理端口需允许容器访问。不要提交 `.env`。
+两个大鱼共用 `.env` 中的 `DEEPSEEK_API_KEY`，通过 DSH 原生适配器调用 DeepSeek Messages API。默认使用 `deepseek-flash`，可通过 `DEEPSEEK_MODEL` 指定模型。默认直接联网，如需代理，填写 `DAYU_PROXY`。本机代理可使用 `http://host.docker.internal:7897`，代理端口需允许容器访问。不要提交 `.env`。
 
 首次构建会安装依赖，并调用 `hanzi-chai` 自带的 `bun run fetch`，从 `api.chaifen.app`、`assets.chaifen.app` 下载拆分数据；必要数据缺失会中止构建，修复网络后重试。知识库来自四个 Git 子模组，随镜像一起构建，无需手动准备数据卷或本机 DSH 配置。已有检出缺少子模组时运行 `git submodule update --init --recursive`。
 
@@ -62,4 +62,4 @@ docker compose up -d --build
 
 Rime 控制台通过校验过的上游源码构建，许可证保留在镜像 `/usr/share/doc/rime-console/LICENSE`。需要实测时先将 `/workspace/rime-snow-pinyin` 复制到 `output/`，再在副本运行 `rime_api_console`。当前 librime 1.13.1 可查询候选，但缺少统计插件所需的 `get_time_ms`，不能用来验证打字速度统计。
 
-已有部署若使用 Codex 登录，可在 `.env` 设置 `LLM_PROVIDER=openai-codex`，继续使用对应 state 卷内已有的 `PI_OAUTH_OPENAI_CODEX` 凭据。新部署默认使用 API Key，不需要复制他人的账号文件。需要接续旧会话时，用 `SNOW_WORKSPACE` / `CHAIFEN_WORKSPACE` 指定原来的容器内工作目录；这两个选项只改变容器内路径，不挂载宿主机目录。
+需要接续旧会话时，用 `SNOW_WORKSPACE` / `CHAIFEN_WORKSPACE` 指定原来的容器内工作目录；这两个选项只改变容器内路径，不挂载宿主机目录。

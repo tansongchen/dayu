@@ -16,18 +16,12 @@ function required(key: string): string {
     );
   return value;
 }
-const provider = process.env.LLM_PROVIDER || 'openai';
-if (!['openai', 'openai-codex'].includes(provider))
-  throw new Error('LLM_PROVIDER must be openai or openai-codex');
+const provider = 'deepseek-official';
 const appId = required('QQBOT_APPID');
 const appSecret = required('QQBOT_SECRET');
-const model = required('LLM_MODEL');
-if (provider === 'openai') required('LLM_API_KEY');
-const api = process.env.LLM_API || 'openai-responses';
-if (!['openai-responses', 'openai-completions'].includes(api))
-  throw new Error('Unsupported LLM_API');
-const baseURL = new URL(process.env.LLM_BASE_URL || 'https://api.openai.com/v1');
-if (!['https:', 'http:'].includes(baseURL.protocol)) throw new Error('Invalid LLM_BASE_URL');
+const model = process.env.DEEPSEEK_MODEL?.trim() || 'deepseek-flash';
+const check = process.argv.includes('--check');
+if (!check) required('DEEPSEEK_API_KEY');
 
 const workspace = process.cwd();
 const home = '/state/dsh';
@@ -35,15 +29,6 @@ const configDir = `${home}/profiles/${profile}`;
 fs.mkdirSync(configDir, { recursive: true });
 fs.mkdirSync('/state/home', { recursive: true });
 fs.mkdirSync(`${workspace}/output`, { recursive: true });
-if (provider === 'openai-codex') {
-  const credentials = yaml.load(fs.readFileSync(`${home}/.credentials.yaml`, 'utf8')) as
-    | { refs?: Record<string, unknown> }
-    | undefined;
-  if (!credentials?.refs?.PI_OAUTH_OPENAI_CODEX)
-    throw new Error(
-      'openai-codex requires an existing signed-in state volume; use LLM_API_KEY for a new deployment',
-    );
-}
 function link(target: string, name: string): void {
   const stat = fs.lstatSync(name, { throwIfNoEntry: false });
   if (stat?.isSymbolicLink() && fs.readlinkSync(name) === target) return;
@@ -81,25 +66,13 @@ const patches: Record<string, unknown>[] = [
       access: { c2cMode: 'open', c2cAllow: [], groupMode: 'open', groupAllow: [] },
     },
   },
+  { id: 'agent-default-model', config: { provider, model } },
+  { id: 'session-log-deepseek', config: { enabled: false } },
+  { id: 'plugin-package-inventory-deepseek', config: { enabled: false } },
   { id: 'session-persistence-jsonl', config: { root: `${configDir}/sessions` } },
   { insert: [{ id: 'dayu-runtime-logging', name: '/opt/dayu/dayu-runtime-logging.ts' }] },
 ];
-if (provider === 'openai')
-  patches.push({
-    id: 'llm-pi-ai',
-    config: {
-      providers: {
-        openai: {
-          apiKeyEnv: 'LLM_API_KEY',
-          api,
-          baseURL: baseURL.href.replace(/\/$/, ''),
-          models: [{ id: model, name: model, contextWindow: 128000, input: ['text', 'image'] }],
-        },
-      },
-    },
-  });
 const bundles = ['@deepseek-ai/dsh-base', '@tencent-connect/dsh-qqbot'];
-if (provider === 'openai-codex') bundles.push('dsh-openai-codex-auth');
 fs.writeFileSync(
   `${configDir}/package.json`,
   JSON.stringify({ private: true, dsh: { profile: { bundles } } }),
@@ -108,7 +81,7 @@ fs.writeFileSync(`${configDir}/cordis.yml`, '[]\n');
 fs.writeFileSync(`${configDir}/cordis.patch.yml`, yaml.dump(patches), { mode: 0o600 });
 process.chdir(workspace);
 const cli = '/opt/dayu/node_modules/@deepseek-ai/dsh/lib/bin.js';
-if (process.argv.includes('--check')) {
+if (check) {
   const result = spawnSync(process.execPath, [cli, '--profile', profile, '--dump-config'], {
     encoding: 'utf8',
   });

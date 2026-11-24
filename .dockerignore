@@ -29,6 +29,7 @@
 **/installation.yaml
 **/packages/hanzi-chai/src/data
 **/packages/hanzi-chai/src/data/**
+chaifen-dayu/hanzi-chai/data
 **/public/data
 **/public/data/**
 **/dist

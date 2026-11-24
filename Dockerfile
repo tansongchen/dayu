@@ -28,14 +28,13 @@ RUN test -f /knowledge/snow-dayu/docs/index.md \
     && ln -s /opt/dayu/node_modules /knowledge/chaifen-dayu/hanzi-chai/node_modules \
     && cd /knowledge/chaifen-dayu/hanzi-chai \
     && bun run fetch \
-    && for file in repertoire.json.deflate cjk.txt dictionary.txt distribution.txt equivalence.txt tygf.txt gf0014.txt; do \
-         test -s "packages/hanzi-chai/src/data/$file" || { echo "Missing dataset: $file" >&2; exit 1; }; \
-       done \
-    && rm -rf public/data
+    && for file in characters.json glyphs.json cjk.txt dictionary.txt distribution.txt equivalence.txt tygf.txt gf0014.txt; do \
+         test -s "data/$file" || { echo "Missing dataset: $file" >&2; exit 1; }; \
+       done
 COPY start.ts dayu-runtime-logging.ts /opt/dayu/
 RUN mkdir -p /state/dsh /state/home /workspace && chown -R node:node /state /workspace
 ENV HOME=/state/home DSH_HOME=/state/dsh NODE_USE_ENV_PROXY=1 NARB_DISABLE_NATIVE_CACHE=1 LANG=C.UTF-8 \
     PATH=/opt/dayu/node_modules/.bin:/usr/local/bin:/usr/bin:/bin
 WORKDIR /workspace
 USER 1000:1000
-ENTRYPOINT ["bun", "/opt/dayu/start.ts"]
+ENTRYPOINT ["node", "/opt/dayu/start.ts"]

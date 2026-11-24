@@ -1,4 +1,4 @@
-import { statSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { Resvg } from '@resvg/resvg-js';
 import { createFeihuaBetaLookup, feihuaBetaPath } from './feihua.ts';
 import { createKeytaoLookup } from './keytao.ts';
@@ -39,6 +39,16 @@ const panelGap = 10;
 const titleHeight = 52;
 const pinyinWidth = 7 * 14;
 const font = process.platform === 'darwin' ? 'Hiragino Sans GB' : 'Noto Sans CJK SC';
+const fontFile =
+  process.platform === 'darwin'
+    ? '/System/Library/Fonts/Hiragino Sans GB.ttc'
+    : '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc';
+// resvg's system font scan misses Debian's OpenType directory in the bot image.
+const fontOptions = { fontFiles: existsSync(fontFile) ? [fontFile] : [] };
+
+function renderPng(source: string) {
+  return Buffer.from(new Resvg(source, { font: fontOptions }).render().asPng());
+}
 
 type Panel = { width: number; height: number; draw(width: number, height: number): string };
 
@@ -231,7 +241,7 @@ export function createGlyphRenderer(options: { feihuaBetaFile?: string } = {}) {
     if (cached) return cached;
     const source = svg(character, scheme);
     if (!source) return null;
-    const buffer = Buffer.from(new Resvg(source).render().asPng());
+    const buffer = renderPng(source);
     const oldest = cache.keys().next().value;
     if (cache.size >= 128 && oldest !== undefined) cache.delete(oldest);
     cache.set(cacheKey, buffer);
@@ -252,7 +262,7 @@ export function createGlyphRenderer(options: { feihuaBetaFile?: string } = {}) {
     }
     if (!panels.length) return { buffer: null, missing };
     const source = composePanels(panels, scheme);
-    return { buffer: Buffer.from(new Resvg(source).render().asPng()), missing };
+    return { buffer: renderPng(source), missing };
   }
 
   return { svg, png, pngMany };
